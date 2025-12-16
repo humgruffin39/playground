@@ -33,26 +33,13 @@ function applyTheme(theme: Settings["theme"]) {
 }
 
 function applyAccentColor(color: AccentColor) {
-  if (color === "orange") {
-    document.documentElement.style.setProperty("--primary", "#FF6900");
+  const accent = ACCENT_COLORS.find((c) => c.value === color);
+  if (accent) {
+    document.documentElement.style.setProperty("--primary", accent.color);
     document.documentElement.style.setProperty(
       "--primary-foreground",
       "#FFFFFF"
     );
-  } else {
-    const accent = ACCENT_COLORS.find((c) => c.value === color);
-    if (accent) {
-      document.documentElement.style.setProperty(
-        "--accent-hue",
-        String(accent.hue)
-      );
-      document.documentElement.style.setProperty(
-        "--accent-chroma",
-        String(accent.chroma)
-      );
-      document.documentElement.style.removeProperty("--primary");
-      document.documentElement.style.removeProperty("--primary-foreground");
-    }
   }
 }
 

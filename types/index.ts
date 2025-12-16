@@ -26,10 +26,10 @@ export type EditorTheme = LightTheme | DarkTheme;
 export type AccentColor =
   | "neutral"
   | "orange"
-  | "blue"
+  | "red"
   | "green"
-  | "purple"
-  | "rose";
+  | "rose"
+  | "purple";
 
 export type EditorFont =
   | "azeret"
@@ -93,15 +93,14 @@ export const DARK_THEMES: { value: DarkTheme; label: string }[] = [
 
 export const ACCENT_COLORS: {
   value: AccentColor;
-  hue: number;
-  chroma: number;
+  color: string;
 }[] = [
-  { value: "neutral", hue: 0, chroma: 0 },
-  { value: "orange", hue: 25, chroma: 0.2 },
-  { value: "blue", hue: 230, chroma: 0.15 },
-  { value: "green", hue: 145, chroma: 0.15 },
-  { value: "purple", hue: 280, chroma: 0.15 },
-  { value: "rose", hue: 350, chroma: 0.15 },
+  { value: "neutral", color: "#6D6C6C" },
+  { value: "orange", color: "#E56D00" },
+  { value: "red", color: "#6F100F" },
+  { value: "green", color: "#006233" },
+  { value: "rose", color: "#AE4560" },
+  { value: "purple", color: "#57316B" },
 ];
 
 export const EDITOR_FONTS: {
