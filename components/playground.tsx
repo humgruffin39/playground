@@ -1,0 +1,168 @@
+"use client";
+
+import { MobileWarning, ShareButton, ThemeToggle } from "@/components/atoms";
+import {
+  EditorPane,
+  LanguageSelector,
+  OutputPane,
+  SettingsPanel,
+} from "@/components/molecules";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import { useCodeExecutor, useDebounce, useSettings } from "@/hooks";
+import type { ExecutionResult, Language } from "@/types";
+import { useCallback, useEffect, useState } from "react";
+
+const DEFAULT_CODE: Record<Language, string> = {
+  javascript: `const greet = (name) => \`Hello, \${name}!\`;
+
+console.log(greet("World"));
+
+const numbers = [1, 2, 3, 4, 5];
+const doubled = numbers.map(n => n * 2);
+console.log("Doubled:", doubled);
+
+const fibonacci = (n) => {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+};
+
+console.log("Fibonacci(10):", fibonacci(10));`,
+  typescript: `interface User {
+  name: string;
+  age: number;
+}
+
+const createUser = (name: string, age: number): User => ({ name, age });
+
+const user = createUser("TypeScript", 12);
+console.log(\`\${user.name} is \${user.age} years old\`);
+
+type Result<T> = { ok: true; data: T } | { ok: false; error: string };
+
+const ok = <T>(data: T): Result<T> => ({ ok: true, data });
+
+console.log("Result:", ok({ id: 1 }));`,
+};
+
+function usePersistedCode() {
+  const [language, setLanguage] = useState<Language>("javascript");
+  const [codes, setCodes] = useState(DEFAULT_CODE);
+
+  useEffect(() => {
+    try {
+      const lang = localStorage.getItem("pg-lang") as Language | null;
+      const stored = localStorage.getItem("pg-codes");
+      if (lang) setLanguage(lang);
+      if (stored) setCodes({ ...DEFAULT_CODE, ...JSON.parse(stored) });
+    } catch {}
+  }, []);
+
+  const updateLanguage = useCallback((lang: Language) => {
+    setLanguage(lang);
+    localStorage.setItem("pg-lang", lang);
+  }, []);
+
+  const updateCode = useCallback((lang: Language, code: string) => {
+    setCodes((prev) => {
+      const next = { ...prev, [lang]: code };
+      localStorage.setItem("pg-codes", JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  return { language, codes, updateLanguage, updateCode };
+}
+
+export function Playground() {
+  const { settings, updateSettings, resetSettings, isDark } = useSettings();
+  const { language, codes, updateLanguage, updateCode } = usePersistedCode();
+  const { execute } = useCodeExecutor();
+  const [result, setResult] = useState<ExecutionResult | null>(null);
+
+  const code = codes[language];
+  const debouncedCode = useDebounce(code, settings.debounceMs);
+  const editorTheme = isDark ? settings.darkTheme : settings.lightTheme;
+
+  useEffect(() => {
+    if (debouncedCode) {
+      setResult(execute(debouncedCode, language));
+    }
+  }, [debouncedCode, language, execute]);
+
+  const handleRun = useCallback(() => {
+    setResult(execute(code, language));
+  }, [code, language, execute]);
+
+  const getShareUrl = useCallback(() => {
+    return window.location.origin + window.location.pathname;
+  }, []);
+
+  return (
+    <>
+      <MobileWarning />
+      <div className="flex h-screen flex-col bg-background">
+        <header className="flex h-10 items-center justify-between border-b px-2">
+          <div className="flex items-center">
+            <span className="px-2 text-sm font-semibold">Playground</span>
+            <LanguageSelector value={language} onChange={updateLanguage} />
+          </div>
+          <div className="flex items-center">
+            <SettingsPanel
+              settings={settings}
+              isDark={isDark}
+              onChange={updateSettings}
+              onReset={resetSettings}
+            />
+            <ThemeToggle
+              theme={settings.theme}
+              onChange={(theme) => updateSettings({ theme })}
+            />
+            <ShareButton getShareUrl={getShareUrl} />
+          </div>
+        </header>
+        <main className="flex-1 overflow-hidden">
+          <div className="hidden md:block h-full">
+            <ResizablePanelGroup direction="horizontal">
+              <ResizablePanel defaultSize={55} minSize={25}>
+                <EditorPane
+                  code={code}
+                  onChange={(c) => updateCode(language, c)}
+                  language={language}
+                  theme={editorTheme}
+                  settings={settings}
+                  onRun={handleRun}
+                />
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel defaultSize={45} minSize={20}>
+                <OutputPane result={result} settings={settings} />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </div>
+          <div className="block md:hidden h-full">
+            <div className="flex h-full flex-col">
+              <div className="flex-1 min-h-0">
+                <EditorPane
+                  code={code}
+                  onChange={(c) => updateCode(language, c)}
+                  language={language}
+                  theme={editorTheme}
+                  settings={settings}
+                  onRun={handleRun}
+                />
+              </div>
+              <div className="border-t" />
+              <div className="flex-1 min-h-0">
+                <OutputPane result={result} settings={settings} />
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </>
+  );
+}
