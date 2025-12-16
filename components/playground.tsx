@@ -84,14 +84,17 @@ export function Playground() {
   const [result, setResult] = useState<ExecutionResult | null>(null);
 
   const code = codes[language];
-  const debouncedCode = useDebounce(code, settings.debounceMs);
+  const debouncedCode = useDebounce(
+    code,
+    settings.autoRun ? settings.debounceMs : 0
+  );
   const editorTheme = isDark ? settings.darkTheme : settings.lightTheme;
 
   useEffect(() => {
-    if (debouncedCode) {
+    if (settings.autoRun && debouncedCode) {
       setResult(execute(debouncedCode, language));
     }
-  }, [debouncedCode, language, execute]);
+  }, [debouncedCode, language, execute, settings.autoRun]);
 
   const handleRun = useCallback(() => {
     setResult(execute(code, language));

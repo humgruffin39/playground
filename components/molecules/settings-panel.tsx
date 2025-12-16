@@ -164,6 +164,16 @@ export function SettingsPanel({
               />
             </div>
 
+            <div className="flex items-center justify-between">
+              <Label className="text-[11px] text-muted-foreground">
+                Auto Run
+              </Label>
+              <Switch
+                checked={settings.autoRun}
+                onCheckedChange={(v) => onChange({ autoRun: v })}
+              />
+            </div>
+
             <div className="flex items-center justify-between border-t pt-3">
               <Label className="text-[11px] text-muted-foreground">Theme</Label>
               <div className="flex gap-0.5">

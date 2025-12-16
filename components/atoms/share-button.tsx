@@ -1,5 +1,6 @@
 "use client";
 
+import { IconCheck, IconLink } from "@tabler/icons-react";
 import { useCallback, useState } from "react";
 
 interface ShareButtonProps {
@@ -19,9 +20,14 @@ export function ShareButton({ getShareUrl }: ShareButtonProps) {
   return (
     <button
       onClick={handleShare}
-      className="ml-1 w-14 bg-primary py-1 text-center text-[11px] font-medium text-primary-foreground transition-opacity hover:opacity-90"
+      className="ml-1 flex w-20 items-center justify-center gap-1 bg-primary py-1 text-[11px] font-medium text-primary-foreground transition-opacity hover:opacity-90"
     >
-      {copied ? "Copied!" : "Share"}
+      {copied ? (
+        <IconCheck size={14} stroke={2} />
+      ) : (
+        <IconLink size={14} stroke={2} />
+      )}
+      <span>Share</span>
     </button>
   );
 }

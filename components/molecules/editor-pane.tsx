@@ -3,6 +3,7 @@
 import { CodeEditor } from "@/components/atoms";
 import { cn } from "@/lib/utils";
 import type { EditorTheme, Language, Settings } from "@/types";
+import { IconPlayerPlay } from "@tabler/icons-react";
 
 interface EditorPaneProps {
   code: string;
@@ -31,8 +32,9 @@ export function EditorPane({
         </span>
         <button
           onClick={onRun}
-          className="bg-primary px-2.5 py-0.5 text-[10px] font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          className="flex items-center gap-1 bg-primary px-2.5 py-0.5 text-[10px] font-medium text-primary-foreground transition-opacity hover:opacity-90"
         >
+          <IconPlayerPlay size={12} stroke={2} />
           Run
         </button>
       </div>

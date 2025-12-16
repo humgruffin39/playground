@@ -55,6 +55,7 @@ export interface Settings {
   tabSize: number;
   wordWrap: boolean;
   lineNumbers: boolean;
+  autoRun: boolean;
   debounceMs: number;
 }
 
@@ -68,6 +69,7 @@ export const DEFAULT_SETTINGS: Settings = {
   tabSize: 2,
   wordWrap: false,
   lineNumbers: true,
+  autoRun: true,
   debounceMs: 300,
 };
 
