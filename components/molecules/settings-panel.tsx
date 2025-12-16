@@ -13,6 +13,8 @@ import {
   DARK_THEMES,
   EDITOR_FONTS,
   LIGHT_THEMES,
+  type DarkTheme,
+  type LightTheme,
   type Settings,
 } from "@/types";
 import { IconSettings } from "@tabler/icons-react";
@@ -64,8 +66,8 @@ export function SettingsPanel({
                     onClick={() =>
                       onChange(
                         isDark
-                          ? { darkTheme: t.value }
-                          : { lightTheme: t.value }
+                          ? { darkTheme: t.value as DarkTheme }
+                          : { lightTheme: t.value as LightTheme }
                       )
                     }
                     className={`px-1.5 py-1 text-[10px] truncate ${
