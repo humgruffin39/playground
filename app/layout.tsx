@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
 import "./globals.css";
 
 const azeretMono = localFont({
@@ -74,9 +75,66 @@ const robotoMono = localFont({
   display: "swap",
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://playground.example.com";
+const siteName = "Code Playground";
+const siteDescription =
+  "JavaScript & TypeScript REPL playground - Write, run, and test your code in real-time. Supports JavaScript and TypeScript with syntax highlighting, auto-run, and customizable themes.";
+
 export const metadata: Metadata = {
-  title: "Code Playground",
-  description: "JavaScript & TypeScript REPL playground",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: siteName,
+    template: `%s | ${siteName}`,
+  },
+  description: siteDescription,
+  keywords: [
+    "javascript",
+    "typescript",
+    "repl",
+    "playground",
+    "code editor",
+    "online compiler",
+    "javascript playground",
+    "typescript playground",
+    "code runner",
+    "live coding",
+    "interactive coding",
+    "web development",
+    "programming",
+    "code testing",
+  ],
+  authors: [{ name: "Code Playground" }],
+  creator: "Code Playground",
+  publisher: "Code Playground",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: siteName,
+    title: siteName,
+    description: siteDescription,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+  category: "development",
 };
 
 const fontVariables = [
@@ -99,9 +157,41 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: siteName,
+    description: siteDescription,
+    url: siteUrl,
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "Web",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    featureList: [
+      "JavaScript REPL",
+      "TypeScript REPL",
+      "Real-time code execution",
+      "Syntax highlighting",
+      "Customizable themes",
+      "Auto-run functionality",
+      "Code sharing",
+    ],
+    programmingLanguage: ["JavaScript", "TypeScript"],
+  };
+
   return (
     <html lang="en" className={fontVariables}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <Script
+          id="structured-data"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
