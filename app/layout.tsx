@@ -77,7 +77,7 @@ const robotoMono = localFont({
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://playground.example.com";
-const siteName = "Code Playground";
+const siteName = "Playground";
 const siteDescription =
   "JavaScript & TypeScript REPL playground - Write, run, and test your code in real-time. Supports JavaScript and TypeScript with syntax highlighting, auto-run, and customizable themes.";
 
@@ -104,9 +104,9 @@ export const metadata: Metadata = {
     "programming",
     "code testing",
   ],
-  authors: [{ name: "Code Playground" }],
-  creator: "Code Playground",
-  publisher: "Code Playground",
+  authors: [{ name: "Hugh Fabre" }],
+  creator: "Hugh Fabre",
+  publisher: "Hugh Fabre",
   formatDetection: {
     email: false,
     address: false,
