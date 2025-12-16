@@ -97,12 +97,22 @@ export function Playground() {
 
   useEffect(() => {
     if (settings.autoRun && debouncedCode) {
-      setResult(execute(debouncedCode, language));
+      let cancelled = false;
+      execute(debouncedCode, language).then((result) => {
+        if (!cancelled) {
+          setResult(result);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
     }
   }, [debouncedCode, language, execute, settings.autoRun]);
 
   const handleRun = useCallback(() => {
-    setResult(execute(code, language));
+    execute(code, language).then((result) => {
+      setResult(result);
+    });
   }, [code, language, execute]);
 
   const getShareUrl = useCallback(() => {
