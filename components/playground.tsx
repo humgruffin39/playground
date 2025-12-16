@@ -82,6 +82,7 @@ export function Playground() {
   const { language, codes, updateLanguage, updateCode } = usePersistedCode();
   const { execute } = useCodeExecutor();
   const [result, setResult] = useState<ExecutionResult | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const code = codes[language];
   const debouncedCode = useDebounce(
@@ -89,6 +90,10 @@ export function Playground() {
     settings.autoRun ? settings.debounceMs : 0
   );
   const editorTheme = isDark ? settings.darkTheme : settings.lightTheme;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (settings.autoRun && debouncedCode) {
@@ -130,24 +135,45 @@ export function Playground() {
           </div>
         </header>
         <main className="flex-1 overflow-hidden">
-          <div className="hidden md:block h-full">
-            <ResizablePanelGroup direction="horizontal">
-              <ResizablePanel defaultSize={55} minSize={25}>
-                <EditorPane
-                  code={code}
-                  onChange={(c) => updateCode(language, c)}
-                  language={language}
-                  theme={editorTheme}
-                  settings={settings}
-                  onRun={handleRun}
-                />
-              </ResizablePanel>
-              <ResizableHandle />
-              <ResizablePanel defaultSize={45} minSize={20}>
-                <OutputPane result={result} settings={settings} />
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </div>
+          {mounted ? (
+            <div className="hidden md:block h-full">
+              <ResizablePanelGroup direction="horizontal">
+                <ResizablePanel defaultSize={55} minSize={25}>
+                  <EditorPane
+                    code={code}
+                    onChange={(c) => updateCode(language, c)}
+                    language={language}
+                    theme={editorTheme}
+                    settings={settings}
+                    onRun={handleRun}
+                  />
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel defaultSize={45} minSize={20}>
+                  <OutputPane result={result} settings={settings} />
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </div>
+          ) : (
+            <div className="hidden md:block h-full">
+              <div className="flex h-full">
+                <div className="flex-1" style={{ width: "55%" }}>
+                  <EditorPane
+                    code={code}
+                    onChange={(c) => updateCode(language, c)}
+                    language={language}
+                    theme={editorTheme}
+                    settings={settings}
+                    onRun={handleRun}
+                  />
+                </div>
+                <div className="w-px bg-border" />
+                <div className="flex-1" style={{ width: "45%" }}>
+                  <OutputPane result={result} settings={settings} />
+                </div>
+              </div>
+            </div>
+          )}
           <div className="block md:hidden h-full">
             <div className="flex h-full flex-col">
               <div className="flex-1 min-h-0">
