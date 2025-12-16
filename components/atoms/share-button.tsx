@@ -20,14 +20,14 @@ export function ShareButton({ getShareUrl }: ShareButtonProps) {
   return (
     <button
       onClick={handleShare}
-      className="ml-1 flex w-20 items-center justify-center gap-1 bg-primary py-1 text-[11px] font-medium text-primary-foreground transition-opacity hover:opacity-90"
+      className="flex shrink-0 items-center justify-center gap-1 bg-primary px-2 py-1 text-[11px] font-medium text-primary-foreground transition-opacity hover:opacity-90"
     >
       {copied ? (
         <IconCheck size={14} stroke={2} />
       ) : (
         <IconLink size={14} stroke={2} />
       )}
-      <span>Share</span>
+      <span className="whitespace-nowrap">Share</span>
     </button>
   );
 }

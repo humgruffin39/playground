@@ -108,12 +108,14 @@ export function Playground() {
     <>
       <MobileWarning />
       <div className="flex h-screen flex-col bg-background">
-        <header className="flex h-10 items-center justify-between border-b px-2">
-          <div className="flex items-center">
-            <span className="px-2 text-sm font-semibold">Playground</span>
+        <header className="flex h-10 min-w-0 items-center justify-between border-b px-2">
+          <div className="flex min-w-0 flex-1 items-center gap-1">
+            <span className="hidden px-2 text-sm font-semibold md:inline">
+              Playground
+            </span>
             <LanguageSelector value={language} onChange={updateLanguage} />
           </div>
-          <div className="flex items-center">
+          <div className="flex shrink-0 items-center gap-1">
             <SettingsPanel
               settings={settings}
               isDark={isDark}
