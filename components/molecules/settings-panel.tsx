@@ -35,10 +35,21 @@ export function SettingsPanel({
   const themes = isDark ? DARK_THEMES : LIGHT_THEMES;
   const currentTheme = isDark ? settings.darkTheme : settings.lightTheme;
 
+  const handleThemeChange = (value: string) => {
+    onChange(
+      isDark
+        ? { darkTheme: value as DarkTheme }
+        : { lightTheme: value as LightTheme }
+    );
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="p-1.5 text-muted-foreground transition-colors hover:text-foreground">
+        <button
+          aria-label="Settings"
+          className="p-1.5 text-muted-foreground transition-colors hover:text-foreground"
+        >
           <IconSettings size={18} stroke={1.5} />
         </button>
       </PopoverTrigger>
@@ -63,14 +74,8 @@ export function SettingsPanel({
                 {themes.map((t) => (
                   <button
                     key={t.value}
-                    onClick={() =>
-                      onChange(
-                        isDark
-                          ? { darkTheme: t.value as DarkTheme }
-                          : { lightTheme: t.value as LightTheme }
-                      )
-                    }
-                    className={`px-1.5 py-1 text-[10px] truncate ${
+                    onClick={() => handleThemeChange(t.value)}
+                    className={`truncate px-1.5 py-1 text-[10px] ${
                       currentTheme === t.value
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -89,7 +94,7 @@ export function SettingsPanel({
                   <button
                     key={f.value}
                     onClick={() => onChange({ font: f.value })}
-                    className={`px-1.5 py-1 text-[10px] truncate ${
+                    className={`truncate px-1.5 py-1 text-[10px] ${
                       settings.font === f.value
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"

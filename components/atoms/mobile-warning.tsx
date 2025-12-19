@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 function isMobileDevice(): boolean {
   if (typeof window === "undefined") return false;
@@ -14,41 +14,31 @@ function isMobileDevice(): boolean {
 
 export function MobileWarning() {
   const [isMobile, setIsMobile] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(isMobileDevice());
-    };
+    const checkMobile = () => setIsMobile(isMobileDevice());
     checkMobile();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial sync with sessionStorage
+    setDismissed(!!sessionStorage.getItem("mobile-warning-dismissed"));
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  useEffect(() => {
-    if (isMobile) {
-      const wasDismissed = sessionStorage.getItem("mobile-warning-dismissed");
-      if (!wasDismissed) {
-        setDismissed(false);
-      } else {
-        setDismissed(true);
-      }
-    }
-  }, [isMobile]);
+  const shouldShow = useMemo(
+    () => isMobile && !dismissed,
+    [isMobile, dismissed]
+  );
 
-  if (!isMobile || dismissed) return null;
+  if (!shouldShow) return null;
+
+  const handleDismiss = () => {
+    sessionStorage.setItem("mobile-warning-dismissed", "true");
+    setDismissed(true);
+  };
 
   return (
-    <div
-      className="fixed z-50 flex items-center justify-center bg-black/60"
-      style={{
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        padding: "12px",
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3">
       <div className="w-full max-w-xs border border-border bg-background p-4 shadow-lg">
         <h2 className="mb-2 text-sm font-semibold text-foreground">
           Mobile Not Supported
@@ -59,10 +49,8 @@ export function MobileWarning() {
         </p>
         <div className="flex justify-end">
           <button
-            onClick={() => {
-              sessionStorage.setItem("mobile-warning-dismissed", "true");
-              setDismissed(true);
-            }}
+            onClick={handleDismiss}
+            aria-label="Dismiss mobile warning and continue"
             className="bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity active:opacity-80"
           >
             Continue Anyway

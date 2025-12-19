@@ -1,5 +1,6 @@
 export { CodeEditor } from "./code-editor";
 export { ColorSelector } from "./color-selector";
+export { KeyboardHelp } from "./keyboard-help";
 export { MobileWarning } from "./mobile-warning";
 export { OutputDisplay } from "./output-display";
 export { ShareButton } from "./share-button";

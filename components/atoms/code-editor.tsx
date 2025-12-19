@@ -1,6 +1,6 @@
 "use client";
 
-import { useShiki } from "@/hooks/use-shiki";
+import { useShiki } from "@/hooks";
 import { cn } from "@/lib/utils";
 import type { EditorTheme, Language, Settings } from "@/types";
 import { useCallback, useRef } from "react";
@@ -40,21 +40,64 @@ export function CodeEditor({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      const ta = e.currentTarget;
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
         e.preventDefault();
         onRun?.();
         return;
       }
-      if (e.key === "Tab") {
+
+      if ((e.ctrlKey || e.metaKey) && e.key === "/") {
         e.preventDefault();
-        const ta = e.currentTarget;
-        const start = ta.selectionStart;
-        const end = ta.selectionEnd;
+        const lines = value.split("\n");
+        const startLine = value.substring(0, start).split("\n").length - 1;
+        const endLine = value.substring(0, end).split("\n").length - 1;
+        const selectedLines = lines.slice(startLine, endLine + 1);
+        const allCommented = selectedLines.every((line) =>
+          line.trimStart().startsWith("//")
+        );
+        const newLines = lines.map((line, i) => {
+          if (i >= startLine && i <= endLine) {
+            return allCommented
+              ? line.replace(/^(\s*)\/\/\s?/, "$1")
+              : line.replace(/^(\s*)/, "$1// ");
+          }
+          return line;
+        });
+        onChange(newLines.join("\n"));
+        return;
+      }
+
+      if (e.key === "Tab" && !e.shiftKey) {
+        e.preventDefault();
         const indent = " ".repeat(settings.tabSize);
         onChange(value.substring(0, start) + indent + value.substring(end));
         requestAnimationFrame(() => {
           ta.selectionStart = ta.selectionEnd = start + settings.tabSize;
         });
+        return;
+      }
+
+      if (e.key === "Tab" && e.shiftKey) {
+        e.preventDefault();
+        const lines = value.split("\n");
+        const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+        const lineIndex = value.substring(0, start).split("\n").length - 1;
+        const line = lines[lineIndex];
+        const spaces = line.match(/^(\s*)/)?.[1] || "";
+        const removeCount = Math.min(settings.tabSize, spaces.length);
+        if (removeCount > 0) {
+          lines[lineIndex] = line.substring(removeCount);
+          onChange(lines.join("\n"));
+          requestAnimationFrame(() => {
+            const newPos = Math.max(lineStart, start - removeCount);
+            ta.selectionStart = ta.selectionEnd = newPos;
+          });
+        }
+        return;
       }
     },
     [value, onChange, settings.tabSize, onRun]

@@ -20,12 +20,12 @@ const LANGUAGES: { value: Language; label: string; icon: React.ReactNode }[] = [
   {
     value: "javascript",
     label: "JavaScript",
-    icon: <JavaScriptIcon className="size-[18px]" />,
+    icon: <JavaScriptIcon className="size-[24px]" />,
   },
   {
     value: "typescript",
     label: "TypeScript",
-    icon: <TypeScriptIcon className="size-[18px]" />,
+    icon: <TypeScriptIcon className="size-[24px]" />,
   },
 ];
 

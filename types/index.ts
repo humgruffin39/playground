@@ -3,6 +3,7 @@ export type Language = "javascript" | "typescript";
 export interface ExecutionResult {
   output: string[];
   error?: string;
+  executionTime?: number;
 }
 
 export type LightTheme =
@@ -91,10 +92,7 @@ export const DARK_THEMES: { value: DarkTheme; label: string }[] = [
   { value: "tokyo-night", label: "Tokyo" },
 ];
 
-export const ACCENT_COLORS: {
-  value: AccentColor;
-  color: string;
-}[] = [
+export const ACCENT_COLORS: { value: AccentColor; color: string }[] = [
   { value: "neutral", color: "#6D6C6C" },
   { value: "orange", color: "#E56D00" },
   { value: "red", color: "#6F100F" },

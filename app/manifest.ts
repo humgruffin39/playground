@@ -1,8 +1,6 @@
 import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://pg.hugh.dev/";
-
   return {
     name: "Code Playground",
     short_name: "Playground",

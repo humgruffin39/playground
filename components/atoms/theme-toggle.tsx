@@ -2,7 +2,7 @@
 
 import type { Settings } from "@/types";
 import { IconBrightness } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface ThemeToggleProps {
   theme: Settings["theme"];
@@ -10,35 +10,34 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ theme, onChange }: ThemeToggleProps) {
-  const [displayTheme, setDisplayTheme] = useState<"light" | "dark">("light");
+  const [systemDark, setSystemDark] = useState(false);
 
   useEffect(() => {
-    if (theme === "system") {
       const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      const updateTheme = () => {
-        setDisplayTheme(mq.matches ? "dark" : "light");
-      };
-      updateTheme();
-      mq.addEventListener("change", updateTheme);
-      return () => mq.removeEventListener("change", updateTheme);
-    } else {
-      setDisplayTheme(theme);
-    }
-  }, [theme]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial sync with browser state
+    setSystemDark(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const displayTheme = useMemo(() => {
+    if (theme === "system") return systemDark ? "dark" : "light";
+    return theme;
+  }, [theme, systemDark]);
 
   const handleClick = () => {
     if (theme === "system") {
-      const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      onChange(isDark ? "light" : "dark");
+      onChange(systemDark ? "light" : "dark");
     } else {
-      const next = theme === "light" ? "dark" : "light";
-      onChange(next);
+      onChange(theme === "light" ? "dark" : "light");
     }
   };
 
   return (
     <button
       onClick={handleClick}
+      aria-label={`Toggle theme, current: ${displayTheme}`}
       className="p-1.5 text-muted-foreground transition-colors hover:text-foreground"
       title={`Theme: ${displayTheme}`}
     >

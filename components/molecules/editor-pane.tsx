@@ -32,10 +32,11 @@ export function EditorPane({
         </span>
         <button
           onClick={onRun}
-          className="flex items-center gap-1 bg-primary px-2.5 py-0.5 text-[10px] font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          aria-label="Run code (Ctrl+Enter)"
+          className="flex items-center gap-1 bg-primary px-2.5 py-1 text-[10px] font-medium leading-none text-primary-foreground transition-opacity hover:opacity-90"
         >
-          <IconPlayerPlay size={12} stroke={2} />
-          Run
+          <IconPlayerPlay size={12} stroke={2} className="flex-shrink-0" />
+          <span className="mt-0.4 leading-none">Run</span>
         </button>
       </div>
       <CodeEditor
@@ -45,7 +46,7 @@ export function EditorPane({
         theme={theme}
         settings={settings}
         onRun={onRun}
-        className="flex-1 min-h-0"
+        className="min-h-0 flex-1"
       />
     </div>
   );

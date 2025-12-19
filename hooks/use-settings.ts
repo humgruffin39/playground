@@ -8,7 +8,7 @@ import {
   type EditorFont,
   type Settings,
 } from "@/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const STORAGE_KEY = "playground-settings";
 
@@ -54,21 +54,30 @@ function applyFont(font: EditorFont) {
 }
 
 export function useSettings() {
-  const [settings, setSettingsState] = useState<Settings>(DEFAULT_SETTINGS);
+  const [settings, setSettingsState] = useState<Settings>(() =>
+    getStoredSettings()
+  );
+  const [systemDark, setSystemDark] = useState(false);
 
   useEffect(() => {
     const stored = getStoredSettings();
-    setSettingsState(stored);
     applyTheme(stored.theme);
     applyAccentColor(stored.accentColor);
     applyFont(stored.font);
 
-    if (stored.theme === "system") {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      const handler = () => applyTheme("system");
-      mq.addEventListener("change", handler);
-      return () => mq.removeEventListener("change", handler);
-    }
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial sync with browser state
+    setSystemDark(mq.matches);
+
+    const handler = (e: MediaQueryListEvent) => {
+      setSystemDark(e.matches);
+      if (stored.theme === "system") {
+        applyTheme("system");
+      }
+    };
+
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
   const updateSettings = useCallback((updates: Partial<Settings>) => {
@@ -94,11 +103,11 @@ export function useSettings() {
     applyFont(DEFAULT_SETTINGS.font);
   }, []);
 
-  const isDark =
-    settings.theme === "dark" ||
-    (settings.theme === "system" &&
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const isDark = useMemo(() => {
+    if (settings.theme === "dark") return true;
+    if (settings.theme === "light") return false;
+    return systemDark;
+  }, [settings.theme, systemDark]);
 
   return { settings, updateSettings, resetSettings, isDark };
 }

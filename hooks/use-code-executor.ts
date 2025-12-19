@@ -1,14 +1,11 @@
 "use client";
 
 import type { ExecutionResult, Language } from "@/types";
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { transform } from "sucrase";
 
 const EXECUTION_TIMEOUT = 2000;
 const MAX_OUTPUT_LINES = 500;
-
-let globalWorker: Worker | null = null;
-let workerBlobUrl: string | null = null;
 
 function transpileTypeScript(code: string): string {
   try {
@@ -70,19 +67,10 @@ function detectDangerousPatterns(code: string): string | null {
   return null;
 }
 
-function createWorker(): Worker | null {
-  if (typeof Worker === "undefined") {
-    return null;
-  }
-
-  if (globalWorker) {
-    return globalWorker;
-  }
-
-  try {
-    const T = EXECUTION_TIMEOUT;
-    const M = MAX_OUTPUT_LINES;
-    const workerCode = `
+function getWorkerCode(): string {
+  const T = EXECUTION_TIMEOUT;
+  const M = MAX_OUTPUT_LINES;
+  return `
 const T=${T},M=${M};
 function f(v){
   if(v===null)return"null";
@@ -102,7 +90,7 @@ function f(v){
   return String(v)
 }
 self.onmessage=function(e){
-  const{code:c,id:i}=e.data;
+  const{code:c,id:i,startTime:st}=e.data;
   const o=[];
   let n=0,t=null;
   const x=()=>{if(t){clearTimeout(t);t=null}};
@@ -112,33 +100,46 @@ self.onmessage=function(e){
     warn:(...a)=>{if(n<M){try{o.push(\`[Warn]\${a.map(f).join(" ")}\`);n++;if(n>=M)o.push(\`[Output limit:\${M}lines]\`)}catch{}}},
     info:(...a)=>{if(n<M){try{o.push(\`[Info]\${a.map(f).join(" ")}\`);n++;if(n>=M)o.push(\`[Output limit:\${M}lines]\`)}catch{}}}
   };
-  t=setTimeout(()=>{x();self.postMessage({id:i,result:{output:o,error:\`Execution timeout:exceeded \${T}ms\`}})},T);
+  t=setTimeout(()=>{x();self.postMessage({id:i,result:{output:o,error:\`Execution timeout: exceeded \${T}ms\`,executionTime:Date.now()-st}})},T);
   try{
     const fn=new Function("console",c);
     fn(C);
     x();
-    self.postMessage({id:i,result:{output:o}})
+    self.postMessage({id:i,result:{output:o,executionTime:Date.now()-st}})
   }catch(e){
     x();
-    self.postMessage({id:i,result:{output:o,error:e instanceof Error?e.message:String(e)}})
+    self.postMessage({id:i,result:{output:o,error:e instanceof Error?e.message:String(e),executionTime:Date.now()-st}})
   }
 };`;
+}
 
-    const blob = new Blob([workerCode], { type: "application/javascript" });
-    workerBlobUrl = URL.createObjectURL(blob);
-    globalWorker = new Worker(workerBlobUrl);
-    return globalWorker;
-  } catch (error) {
+function createWorker(): Worker | null {
+  if (typeof Worker === "undefined") return null;
+  try {
+    const blob = new Blob([getWorkerCode()], {
+      type: "application/javascript",
+    });
+    const blobUrl = URL.createObjectURL(blob);
+    const worker = new Worker(blobUrl);
+    URL.revokeObjectURL(blobUrl);
+    return worker;
+  } catch {
     return null;
   }
 }
 
 export function useCodeExecutor() {
-  const pendingRef = useRef<Map<number, (result: ExecutionResult) => void>>(new Map());
+  const pendingRef = useRef<Map<number, (result: ExecutionResult) => void>>(
+    new Map()
+  );
   const idCounterRef = useRef(0);
   const workerRef = useRef<Worker | null>(null);
+  const setupWorkerRef = useRef<(() => void) | null>(null);
 
-  useEffect(() => {
+  const setupWorker = useCallback(() => {
+    if (workerRef.current) {
+      workerRef.current.terminate();
+    }
     workerRef.current = createWorker();
     const worker = workerRef.current;
 
@@ -162,16 +163,29 @@ export function useCodeExecutor() {
         }
       });
       pendingRef.current.clear();
-    };
-
-    return () => {
-      pendingRef.current.clear();
+      setupWorkerRef.current?.();
     };
   }, []);
+
+  useEffect(() => {
+    setupWorkerRef.current = setupWorker;
+  }, [setupWorker]);
+
+  useEffect(() => {
+    setupWorker();
+    const pending = pendingRef.current;
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+      }
+      pending.clear();
+    };
+  }, [setupWorker]);
 
   const execute = useCallback(
     (code: string, language: Language): Promise<ExecutionResult> => {
       return new Promise((resolve) => {
+        const startTime = Date.now();
         try {
           let executableCode = code;
 
@@ -182,6 +196,7 @@ export function useCodeExecutor() {
               resolve({
                 output: [],
                 error: error instanceof Error ? error.message : String(error),
+                executionTime: Date.now() - startTime,
               });
               return;
             }
@@ -192,6 +207,7 @@ export function useCodeExecutor() {
             resolve({
               output: [],
               error: dangerCheck,
+              executionTime: Date.now() - startTime,
             });
             return;
           }
@@ -200,6 +216,7 @@ export function useCodeExecutor() {
             resolve({
               output: [],
               error: "Web Workers are not supported",
+              executionTime: Date.now() - startTime,
             });
             return;
           }
@@ -208,9 +225,11 @@ export function useCodeExecutor() {
           const timeout = setTimeout(() => {
             if (pendingRef.current.has(id)) {
               pendingRef.current.delete(id);
+              setupWorker();
               resolve({
                 output: [],
-                error: `Execution timeout: No response within ${EXECUTION_TIMEOUT + 500}ms`,
+                error: `Execution timeout: exceeded ${EXECUTION_TIMEOUT}ms (worker restarted)`,
+                executionTime: EXECUTION_TIMEOUT,
               });
             }
           }, EXECUTION_TIMEOUT + 500);
@@ -223,24 +242,32 @@ export function useCodeExecutor() {
           pendingRef.current.set(id, wrappedResolve);
 
           try {
-            workerRef.current.postMessage({ code: executableCode, id });
+            workerRef.current.postMessage({
+              code: executableCode,
+              id,
+              startTime,
+            });
           } catch (error) {
             pendingRef.current.delete(id);
             clearTimeout(timeout);
             resolve({
               output: [],
-              error: `Failed to send message: ${error instanceof Error ? error.message : String(error)}`,
+              error: `Failed to send message: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+              executionTime: Date.now() - startTime,
             });
           }
         } catch (error) {
           resolve({
             output: [],
             error: error instanceof Error ? error.message : String(error),
+            executionTime: Date.now() - startTime,
           });
         }
       });
     },
-    []
+    [setupWorker]
   );
 
   return { execute };
